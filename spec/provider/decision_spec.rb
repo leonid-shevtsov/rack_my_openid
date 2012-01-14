@@ -24,5 +24,14 @@ feature 'Decision whether to trust a realm or not' do
       handler.should_receive(:cancel)
       page.click_button('No')
     end
+
+    scenario 'Preserving realm trust' do
+      page.click_button('Yes')
+      handler.should_receive(:handle) { |params,session|
+        session[:trusted_realms].should == ['http://my.realm']
+      }
+      visit('/')
+    end
   end
+
 end
