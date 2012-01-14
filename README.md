@@ -25,7 +25,9 @@ See the [OpenID specs](http://openid.net/specs/openid-authentication-2_0.html) i
 * Add the `rack_my_openid` gem to your Gemfile
 * Add this to your routes:
 
-        match '/openid' => RackMyOpenid::Provider.new(YAML.load_file('config/rack_my_openid.yml'))
+        openid_provider = RackMyOpenid::Provider.new(YAML.load_file('config/rack_my_openid.yml'))
+        match '/openid' => openid_provider 
+        match '/openid/*whatever' => openid_provider 
 
     The `/openid` path can't be changed, as of this release.
 
