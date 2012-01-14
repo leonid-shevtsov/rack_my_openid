@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version     = RackMyOpenid::VERSION
   s.authors     = ["Leonid Shevtsov"]
   s.email       = ["leonid@shevtsov.me"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/leonid-shevtsov/rack_my_openid"
   s.summary     = %q{Single-user OpenID provider implemented as a Rack (Sinatra) application.}
   s.description = %q{Would be useful to enable OpenID authorisation with your Ruby/Rails-based blog, personal website or whatever.}
 
