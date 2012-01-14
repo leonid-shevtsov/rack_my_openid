@@ -6,24 +6,43 @@ module RackMyOpenid
   class Provider < Sinatra::Base
     use Rack::Session::Pool
 
+    # authorization
+    def authorize!
+      response = @auth.call(request.env)
+      unless response===true
+        throw(:halt, response)
+      end
+    end
+
     def initialize(options = {})
       super()
       @options = options
+      @auth = Rack::Auth::Digest::MD5.new(lambda{|e| true}, @options[:realm], $$.to_s) do
+        @options[:credentials]
+      end
+      @auth.passwords_hashed = true
     end
 
     get '/' do
-      begin
-        render_openid_response RackMyOpenid::Handler.new(@options).handle(params, session)
-      rescue RackMyOpenid::Handler::BadRequest
+      if params.empty?
         erb :endpoint
-      rescue RackMyOpenid::Handler::UntrustedRealm => e
-        session[:openid_request_params] = params
-        session[:realm] = e.realm
-        redirect to('/decide'), 302 
+      else
+        authorize!
+        begin
+          render_openid_response RackMyOpenid::Handler.new(@options).handle(params, session)
+        rescue RackMyOpenid::Handler::BadRequest
+          status 400
+          body 'Bad Request'
+        rescue RackMyOpenid::Handler::UntrustedRealm => e
+          session[:openid_request_params] = params
+          session[:realm] = e.realm
+          redirect to('/decide'), 302 
+        end
       end
     end
 
     get '/decide' do
+      authorize!
       if @realm = session[:realm]
         erb :decide
       else
@@ -32,6 +51,7 @@ module RackMyOpenid
     end
 
     post '/decide' do
+      authorize!
       @realm = session.delete(:realm)
       begin
         if params[:yes]

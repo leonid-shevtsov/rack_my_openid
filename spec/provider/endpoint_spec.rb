@@ -6,6 +6,5 @@ feature 'Human-readable endpoint' do
   scenario 'Visiting the endpoint' do
     visit '/'
     page.should have_content 'This is an OpenID endpoint.'
-
   end
 end
