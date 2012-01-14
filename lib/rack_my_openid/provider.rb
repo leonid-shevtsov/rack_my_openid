@@ -4,6 +4,8 @@ require 'rack_my_openid/handler'
 
 module RackMyOpenid
   class Provider < Sinatra::Base
+    set :root, File.dirname(__FILE__)
+
     use Rack::Session::Pool
 
     # authorization
@@ -14,16 +16,22 @@ module RackMyOpenid
       end
     end
 
+    # Options can contain
+    #
+    # * :credentials (required) - `md5 -s 'username:realm:password'`
+    # * :openid (required) - the OpenID you want to authorize
+    # * :realm (optional, the default is "rack_my_openid") - an arbitrary resource name for HTTP Authentication
     def initialize(options = {})
       super()
-      @options = options
-      @auth = Rack::Auth::Digest::MD5.new(lambda{|e| true}, @options[:realm], $$.to_s) do
+      @options = default_options.merge options
+      @auth = Rack::Auth::Digest::MD5.new(lambda{|e| true}, @options[:realm]) do
         @options[:credentials]
       end
+      @auth.opaque = $$.to_s
       @auth.passwords_hashed = true
     end
 
-    get '/' do
+    get '/openid' do
       if params.empty?
         erb :endpoint
       else
@@ -36,21 +44,21 @@ module RackMyOpenid
         rescue RackMyOpenid::Handler::UntrustedRealm => e
           session[:openid_request_params] = params
           session[:realm] = e.realm
-          redirect to('/decide'), 302 
+          redirect to('/openid/decide'), 302 
         end
       end
     end
 
-    get '/decide' do
+    get '/openid/decide' do
       authorize!
       if @realm = session[:realm]
         erb :decide
       else
-        redirect to('/'), 302
+        redirect to('/openid'), 302
       end
     end
 
-    post '/decide' do
+    post '/openid/decide' do
       authorize!
       @realm = session.delete(:realm)
       begin
@@ -71,6 +79,12 @@ module RackMyOpenid
       status response.code
       headers response.headers
       body response.body
+    end
+
+    def default_options
+      {
+        :realm => 'rack_my_openid'
+      }
     end
   end
 end

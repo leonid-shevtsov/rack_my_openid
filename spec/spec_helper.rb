@@ -12,9 +12,9 @@ module AcceptanceHelper
 
   def assume_authorization
     before {
-      visit '/?foo=bar'
+      visit '/openid?foo=bar'
       page.driver.browser.digest_authorize('correct_login', 'correct_password')
-      visit '/?foo=bar'
+      visit '/openid?foo=bar'
     }
   end
 end

@@ -4,7 +4,7 @@ feature 'Human-readable endpoint' do
   setup_app
 
   scenario 'Visiting the endpoint' do
-    visit '/'
+    visit '/openid'
     page.should have_content 'This is an OpenID endpoint.'
   end
 end
