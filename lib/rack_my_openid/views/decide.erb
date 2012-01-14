@@ -1,0 +1,7 @@
+<form method="POST" action="<%=request.path_info%>">
+  <p>
+    Do you wish to trust <strong><%=@realm %></strong> with your identity?
+  </p>
+  <input type="submit" value="Yes" name="yes">
+  <input type="submit" value="No" name="no">
+</form>
