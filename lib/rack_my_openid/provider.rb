@@ -36,7 +36,7 @@ module RackMyOpenid
         erb :endpoint
       else
         authorize!
-        @options[:endpoint_url] ||= "#{request.scheme}://#{request.host_with_port}#{request.fullpath}"
+        @options[:endpoint_url] ||= "#{request.scheme}://#{request.host_with_port}#{request.path_info}"
         begin
           render_openid_response RackMyOpenid::Handler.new(@options).handle(params, session)
         rescue RackMyOpenid::Handler::BadRequest
