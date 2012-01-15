@@ -2,14 +2,14 @@ require 'spec_helper'
 
 shared_examples_for 'a valid request' do
   context 'when realm is trusted via options' do
-    let(:options_with_realm) { options.merge({:trusted_realms => [request.realm]}) }
+    let(:options_with_realm) { options.merge({:trusted_realms => [request.trust_root]}) }
     it 'should answer true' do
       described_class.new(options_with_realm).handle(params, session).should == 'answered true'
     end
   end
 
   context 'when realm is trusted via session' do
-    let(:session) { {:trusted_realms => [request.realm] } }
+    let(:session) { {:trusted_realms => [request.trust_root] } }
     it 'should answer true' do
       described_class.new(options).handle(params, session).should == 'answered true'
     end
@@ -64,7 +64,7 @@ describe RackMyOpenid::Handler do
     let(:params) { {:mode => 'check_id'} }
     let(:request) {
       request = OpenID::Server::CheckIDRequest.new(nil, nil, nil)
-      request.stub(:realm) { 'http://my.realm' }
+      request.stub(:trust_root) { 'http://my.realm' }
       request.stub(:answer).with(true, nil, options[:openid]) { 'answered true' }
       request.stub(:answer).with(false) { 'answered false' }
       request

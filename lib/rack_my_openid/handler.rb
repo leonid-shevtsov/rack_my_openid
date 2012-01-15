@@ -33,11 +33,11 @@ module RackMyOpenid
   private
     
     def openid_server
-      @openid_server ||= OpenID::Server::Server.new(@options[:endpoint_url], openid_store)
+      @openid_server ||= OpenID::Server::Server.new(openid_store, @options[:endpoint_url])
     end
 
     def openid_store
-      @openid_store ||= OpenID::Store::Memory 
+      @openid_store ||= OpenID::Store::Memory.new
     end
     
     # Handle a valid OpenID request
@@ -57,10 +57,10 @@ module RackMyOpenid
     def handle_check_id_request(request, session)
       if request_provided_invalid_openid?(request)
         return request.answer(false)
-      elsif trusted_realm?(request.realm, session)
+      elsif trusted_realm?(request.trust_root, session)
         return request.answer(true, nil, @options[:openid])
       else
-        raise UntrustedRealm.new(request.realm)
+        raise UntrustedRealm.new(request.trust_root)
       end
     end
     

@@ -43,9 +43,10 @@ module RackMyOpenid
           status 400
           body 'Bad Request'
         rescue RackMyOpenid::Handler::UntrustedRealm => e
-          session[:openid_request_params] = params
+          params_without_default_proc = {}.merge params
+          session[:openid_request_params] = params_without_default_proc
           session[:realm] = e.realm
-          redirect to('/openid/decide'), 302 
+          redirect '/openid/decide', 302 
         end
       end
     end
@@ -55,7 +56,7 @@ module RackMyOpenid
       if @realm = session[:realm]
         erb :decide
       else
-        redirect to('/openid'), 302
+        redirect '/openid', 302
       end
     end
 
