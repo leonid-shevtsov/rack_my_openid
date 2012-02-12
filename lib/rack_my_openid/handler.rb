@@ -53,7 +53,7 @@ module RackMyOpenid
     def handle_openid_request(request, session)
       case request
       when OpenID::Server::CheckIDRequest
-        if session[:authorised]
+        if session['authorised']
           return handle_check_id_request(request, session)
         else
           raise NotAuthorised
@@ -84,7 +84,11 @@ module RackMyOpenid
     # 'inverted' (request can either not pass an id or
     # pass a valid id)
     def request_provided_invalid_openid?(request)
-      !request.id_select && (URI.parse(request.claimed_id) != URI.parse(@options[:openid]))
+      begin
+        !request.id_select && (URI.parse(request.claimed_id) != URI.parse(@options[:openid]))
+      rescue URI::InvalidURIError
+        true
+      end
     end
 
     def trusted_realm?(realm, session)

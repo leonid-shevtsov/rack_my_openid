@@ -1,19 +1,16 @@
 require 'spec_helper'
-require 'support/openid_consumer'
+require 'mechanize'
 
-feature 'Authorisation' do
+
+describe 'Authorisation', :type => :request do
   setup_app(false)
-  
-  before do
-    Capybara.default_driver = :selenium
-  end
 
-  let(:consumer_url) { 'http://localhost:9393/login/openid' }
-  let(:our_url) { 'http://localhost:9000' }
-
-  scenario 'Normal authorisation' do
-    visit consumer_url + '?openid_identifier=' + CGI.escape(our_url)
-    puts page.body
+  it 'Normal authorisation' do
+    a = Mechanize.new
+    a.auth 'correct_login', 'correct_password'
+    page = a.get 'http://localhost:12345/login/openid?openid_identifier=' + openid
+    page = page.forms.first.submit(page.forms.first.button_with(:value => 'Yes'))
+    page.body.should == 'OpenID authorisation complete'
   end
 
 end

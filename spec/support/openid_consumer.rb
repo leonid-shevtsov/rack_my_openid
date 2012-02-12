@@ -1,12 +1,11 @@
-# An example for an OpenID consumer using Sinatra
+# This is the OpenID consumer used in integration testing
+
 require 'rubygems'
 require 'sinatra/base'
 require 'openid'
 require 'openid/store/memory'
 
 class OpenIDConsumer < Sinatra::Base
- 
-  enable :inline_templates
 
   def self.openid_store
     @openid_store ||= OpenID::Store::Memory.new

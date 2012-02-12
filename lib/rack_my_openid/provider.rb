@@ -23,16 +23,16 @@ module RackMyOpenid
     # authorization
     before do
       @authorisation_response = @auth.call(request.env)
-      session[:authorised] = @authorisation_response === true
+      session['authorised'] = @authorisation_response === true
     end
 
     def require_authorisation!
-      unless session[:authorised]
+      unless session['authorised']
         throw :halt, @authorisation_response
       end
     end
 
-    def initialize
+    def initialize(*args)
       super
       @auth = Rack::Auth::Digest::MD5.new(lambda{|e| true}, settings.realm) do
         settings.credentials
@@ -58,7 +58,6 @@ module RackMyOpenid
     end
 
     def handle_openid_request
-      puts params.inspect
       begin
         render_openid_response RackMyOpenid::Handler.new(handler_options, self.class.openid_store).handle(params, session)
       rescue RackMyOpenid::Handler::NotAuthorised
@@ -103,7 +102,6 @@ module RackMyOpenid
     end
 
     def render_openid_response(response)
-      puts response.body
       status response.code
       headers response.headers
       body response.body
