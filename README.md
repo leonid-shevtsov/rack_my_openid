@@ -25,13 +25,16 @@ See the [OpenID specs](http://openid.net/specs/openid-authentication-2_0.html) i
 * Add the `rack_my_openid` gem to your Gemfile
 * Add this to your routes:
 
-        openid_provider = RackMyOpenid::Provider.new(YAML.load_file('config/rack_my_openid.yml'))
-        match '/openid' => openid_provider 
-        match '/openid/*whatever' => openid_provider 
+        match '/openid' => RackMyOpenid::Provider 
+        match '/openid/*whatever' => RackMyOpenid::Provider 
 
     The `/openid` path can't be changed, as of this release.
 
 * Create a `config/rack_my_openid.yml` file (see below)
+* Create a `config/initializers/rack_my_openid.rb` file:
+
+        RackMyOpenid::Provider.set YAML.load_file('config/rack_my_openid.yml')
+
 * Restart your Rails app and you're good to go.
 * If you make any changes to the config you'll have to restart the app to pick them up.
 
@@ -43,7 +46,8 @@ This assumes that the OpenID is the root path.
 * Create a `config.ru` in your desired path with these contents:
 
         require 'rack_my_openid'
-        run RackMyOpenid::Provider.new(YAML.load_file('rack_my_openid.yml'))
+        RackMyOpenid::Provider.set(YAML.load_file('rack_my_openid.yml'))
+        run RackMyOpenid::Provider
 
 * Create a `rack_my_openid.yml` file (see below) in the same path
 * Create empty `/public` and `/tmp` directories in the same path
@@ -57,11 +61,13 @@ This is a simple flat Yaml file. The keys are symbols (as of this release).
 * `:openid` - the actual OpenID identifier that you want to provide;
 * `:realm` - the realm for HTTP Digest auth. The default is `"rack_my_openid"`, why would you change it?
 * `:endpoint_url` - the URL of the OpenID endpoint (the one that's '/openid'). You shouldn't explicitly declare it
+* `:store_path` - recommended - a path to OpenID store on the filesystem. If you're running Rails, it could be a catalog under `/tmp`
 
 ## TODO
 
-* Support stores other than memory store
-* Support SReg data provision
+* Support SReg data extension
+* More integration test coverage
+* Refactor and document code more
 
 ~ ~ ~
 

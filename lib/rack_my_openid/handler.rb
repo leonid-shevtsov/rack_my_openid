@@ -5,9 +5,9 @@ module RackMyOpenid
     class BadRequest < RuntimeError; end
     class NotAuthorised < RuntimeError; end
     class UntrustedRealm < RuntimeError
-      attr_reader :request
-      def initialize(request); @request = request; end
-      def message; "OpenID realm #{@request.trust_root} not trusted by user."; end
+      attr_reader :realm
+      def initialize(realm); @realm = realm; end
+      def message; "OpenID consumer #{@realm} not trusted by user."; end
     end
 
     def initialize(options, store)
@@ -16,7 +16,7 @@ module RackMyOpenid
     end
 
     def handle(params, session)
-      if request = decode_request(params)
+      if request = openid_server.decode_request(params)
         return openid_server.encode_response handle_openid_request(request, session)
       else
         raise BadRequest
@@ -24,7 +24,7 @@ module RackMyOpenid
     end
 
     def cancel(params)
-      if request = decode_request(params)
+      if request = openid_server.decode_request(params)
         return openid_server.encode_response cancel_check_id_request(request) 
       else
         raise BadRequest
@@ -35,14 +35,6 @@ module RackMyOpenid
     
     def openid_server
       @openid_server ||= OpenID::Server::Server.new(@openid_store, @options[:endpoint_url])
-    end
-
-    def decode_request(params)
-      if params.is_a?(OpenID::Server::OpenIDRequest)
-        params
-      else
-        openid_server.decode_request(params)
-      end
     end
 
     # Handle a valid OpenID request
@@ -69,7 +61,7 @@ module RackMyOpenid
       elsif trusted_realm?(request.trust_root, session)
         return request.answer(true, nil, @options[:openid])
       else
-        raise UntrustedRealm.new(request)
+        raise UntrustedRealm.new(request.trust_root)
       end
     end
     
