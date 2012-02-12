@@ -1,21 +1,22 @@
 require 'openid/server'
-require 'openid/store/memory'
 
 module RackMyOpenid
   class Handler
     class BadRequest < RuntimeError; end
+    class NotAuthorised < RuntimeError; end
     class UntrustedRealm < RuntimeError
-      attr_reader :realm
-      def initialize(realm); @realm = realm; end
-      def message; "OpenID realm #{@realm} not trusted by user."; end
+      attr_reader :request
+      def initialize(request); @request = request; end
+      def message; "OpenID realm #{@request.trust_root} not trusted by user."; end
     end
 
-    def initialize(options)
+    def initialize(options, store)
       @options = options
+      @openid_store = store
     end
 
     def handle(params, session)
-      if request = openid_server.decode_request(params)
+      if request = decode_request(params)
         return openid_server.encode_response handle_openid_request(request, session)
       else
         raise BadRequest
@@ -23,7 +24,7 @@ module RackMyOpenid
     end
 
     def cancel(params)
-      if request = openid_server.decode_request(params)
+      if request = decode_request(params)
         return openid_server.encode_response cancel_check_id_request(request) 
       else
         raise BadRequest
@@ -33,13 +34,17 @@ module RackMyOpenid
   private
     
     def openid_server
-      @openid_server ||= OpenID::Server::Server.new(openid_store, @options[:endpoint_url])
+      @openid_server ||= OpenID::Server::Server.new(@openid_store, @options[:endpoint_url])
     end
 
-    def openid_store
-      @openid_store ||= OpenID::Store::Memory.new
+    def decode_request(params)
+      if params.is_a?(OpenID::Server::OpenIDRequest)
+        params
+      else
+        openid_server.decode_request(params)
+      end
     end
-    
+
     # Handle a valid OpenID request
     #
     # Requests are handled by the standard openid server,
@@ -48,7 +53,11 @@ module RackMyOpenid
     def handle_openid_request(request, session)
       case request
       when OpenID::Server::CheckIDRequest
-        return handle_check_id_request(request, session)
+        if session[:authorised]
+          return handle_check_id_request(request, session)
+        else
+          raise NotAuthorised
+        end
       else
         return openid_server.handle_request(request)
       end
@@ -60,7 +69,7 @@ module RackMyOpenid
       elsif trusted_realm?(request.trust_root, session)
         return request.answer(true, nil, @options[:openid])
       else
-        raise UntrustedRealm.new(request.trust_root)
+        raise UntrustedRealm.new(request)
       end
     end
     
@@ -75,7 +84,7 @@ module RackMyOpenid
     # 'inverted' (request can either not pass an id or
     # pass a valid id)
     def request_provided_invalid_openid?(request)
-      !request.id_select && (request.claimed_id != @options[:openid])
+      !request.id_select && (URI.parse(request.claimed_id) != URI.parse(@options[:openid]))
     end
 
     def trusted_realm?(realm, session)
@@ -83,7 +92,7 @@ module RackMyOpenid
     end
     
     def trusted_realms(session={})
-      @options.fetch(:trusted_realms, []) + session.fetch(:trusted_realms, [])
+      @options.fetch(:trusted_realms, []) + session.fetch('trusted_realms', [])
     end
   end
 end
