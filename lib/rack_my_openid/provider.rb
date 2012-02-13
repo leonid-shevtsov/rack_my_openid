@@ -64,6 +64,10 @@ module RackMyOpenid
     def self.openid_store
       @openid_store ||= settings.store_path ? OpenID::Store::Filesystem.new(settings.store_path) : OpenID::Store::Memory.new
     end
+    
+    def normalized_openid
+      URI.parse(settings.openid).to_s
+    end
 
     def openid_store
       self.class.openid_store
@@ -73,8 +77,8 @@ module RackMyOpenid
       RackMyOpenid::Handler.new({
           :credentials => settings.credentials,
           :realm => settings.realm,
-          :openid => settings.openid,
-          :endpoint_url => settings.endpoint_url || settings.openid+'/openid'
+          :openid => normalized_openid,
+          :endpoint_url => settings.endpoint_url || normalized_openid+'openid'
         }, openid_store
       )
     end
