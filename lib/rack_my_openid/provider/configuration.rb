@@ -3,7 +3,7 @@ module RackMyOpenid
     module Configuration
       def self.included(klass)
         klass.instance_eval do
-          set :root, File.absolute_path(File.dirname(__FILE__)+'/..')
+          set :root, File.expand_path(__FILE__+'/../..')
           set :credentials, nil
           set :openid, nil
           set :realm, 'rack_my_openid'
