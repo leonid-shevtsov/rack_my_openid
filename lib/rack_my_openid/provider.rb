@@ -17,6 +17,10 @@ module RackMyOpenid
 
     use Rack::Session::Pool
 
+    if defined?(Airbrake)
+      use Airbrake::Rack
+    end
+
     include RackMyOpenid::Provider::Configuration
     include RackMyOpenid::Provider::Authorisation
 
